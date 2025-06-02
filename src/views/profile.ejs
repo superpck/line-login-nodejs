@@ -1,0 +1,25 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>User Profile</title>
+    <link rel="stylesheet" href="/css/style.css">
+</head>
+<body>
+    <div class="container">
+        <h1>User Profile</h1>
+        <div class="profile-info">
+            <% if (user.pictureUrl) { %>
+                <img src="<%= user.pictureUrl %>" alt="Profile Picture" class="profile-image">
+            <% } %>
+            <p><strong>Display Name:</strong> <%= user.displayName %></p>
+            <p><strong>User ID:</strong> <%= user.userId %></p>
+            <% if (user.statusMessage) { %>
+                <p><strong>Status Message:</strong> <%= user.statusMessage %></p>
+            <% } %>
+        </div>
+        <a href="/auth/logout" class="logout-button">Logout</a>
+    </div>
+</body>
+</html>
