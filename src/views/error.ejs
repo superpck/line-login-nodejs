@@ -1,0 +1,60 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Error</title>
+    <link rel="stylesheet" href="/css/style.css">
+    <style>
+        .error-container {
+            text-align: center;
+            padding: 40px 20px;
+        }
+        .error-code {
+            font-size: 72px;
+            color: #e74c3c;
+            margin-bottom: 20px;
+        }
+        .error-message {
+            font-size: 24px;
+            margin-bottom: 30px;
+        }
+        .error-details {
+            margin-top: 30px;
+            padding: 20px;
+            background-color: #f8f9fa;
+            border-radius: 5px;
+            text-align: left;
+            overflow-x: auto;
+        }
+        .home-button {
+            display: inline-block;
+            background-color: #3498db;
+            color: white;
+            padding: 10px 20px;
+            text-decoration: none;
+            border-radius: 4px;
+            margin-top: 20px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container error-container">
+        <div class="error-code">
+            <%= error.status || 500 %>
+        </div>
+        <div class="error-message">
+            <h1><%= message %></h1>
+        </div>
+        <p>Sorry, something went wrong.</p>
+        
+        <% if (error && error.stack) { %>
+            <div class="error-details">
+                <pre><%= error.stack %></pre>
+            </div>
+        <% } %>
+        
+        <a href="/" class="home-button">Back to Home</a>
+    </div>
+</body>
+</html>

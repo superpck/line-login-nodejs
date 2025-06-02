@@ -1,4 +1,4 @@
-import { Request, Response } from 'express';
+import { Request, Response, NextFunction } from 'express';
 import axios from 'axios';
 import lineConfig from '../config/line';
 
@@ -28,38 +28,43 @@ declare module 'express-session' {
   }
 }
 
-export const login = (req: Request, res: Response): void => {
-  // Generate random state and nonce for security
-  const state = Math.random().toString(36).substring(7);
-  const nonce = Math.random().toString(36).substring(7);
-  
-  // Store state and nonce in session for verification
-  req.session.state = state;
-  req.session.nonce = nonce;
-  
-  const lineLoginUrl = 'https://access.line.me/oauth2/v2.1/authorize';
-  const params = new URLSearchParams({
-    response_type: 'code',
-    client_id: lineConfig.channelId || '',
-    redirect_uri: lineConfig.callbackUrl || '',
-    state: state,
-    scope: lineConfig.scope,
-    nonce: nonce,
-  });
-  
-  res.redirect(`${lineLoginUrl}?${params.toString()}`);
+export const login = (req: Request, res: Response, next: NextFunction): void => {
+  try {
+    // Generate random state and nonce for security
+    const state = Math.random().toString(36).substring(7);
+    const nonce = Math.random().toString(36).substring(7);
+    
+    // Store state and nonce in session for verification
+    req.session.state = state;
+    req.session.nonce = nonce;
+    
+    const lineLoginUrl = 'https://access.line.me/oauth2/v2.1/authorize';
+    const params = new URLSearchParams({
+      response_type: 'code',
+      client_id: lineConfig.channelId || '',
+      redirect_uri: lineConfig.callbackUrl || '',
+      state: state,
+      scope: lineConfig.scope,
+      nonce: nonce,
+    });
+    
+    res.redirect(`${lineLoginUrl}?${params.toString()}`);
+  } catch (error) {
+    next(error); // Pass errors to Express error handler
+  }
 };
 
-export const callback = async (req: Request, res: Response): Promise<void> => {
-  const { code, state } = req.query;
-  
-  // Verify state parameter to prevent CSRF attacks
-  if (state !== req.session.state) {
-    res.status(401).send('Invalid state parameter');
-    return;
-  }
-  
+export const callback = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
   try {
+    const { code, state } = req.query;
+    
+    // Verify state parameter to prevent CSRF attacks
+    if (state !== req.session.state) {
+      const error = new Error('Invalid state parameter') as any;
+      error.status = 401;
+      throw error;
+    }
+    
     // Exchange authorization code for access token
     const tokenResponse = await axios.post<LineTokenResponse>(
       'https://api.line.me/oauth2/v2.1/token',
@@ -97,25 +102,32 @@ export const callback = async (req: Request, res: Response): Promise<void> => {
     // Redirect to profile page
     res.redirect('/auth/profile');
   } catch (error) {
-    console.error('Error during LINE login:', error);
-    res.status(500).send('Error authenticating with LINE');
+    next(error); // Pass errors to Express error handler
   }
 };
 
-export const profile = (req: Request, res: Response): void => {
-  if (!req.session.user) {
-    res.redirect('/');
-    return;
-  }
-  
-  res.render('profile', { user: req.session.user });
-};
-
-export const logout = (req: Request, res: Response): void => {
-  req.session.destroy((err) => {
-    if (err) {
-      console.error('Error destroying session:', err);
+export const profile = (req: Request, res: Response, next: NextFunction): void => {
+  try {
+    if (!req.session.user) {
+      res.redirect('/');
+      return;
     }
-    res.redirect('/');
-  });
+    
+    res.render('profile', { user: req.session.user });
+  } catch (error) {
+    next(error);
+  }
+};
+
+export const logout = (req: Request, res: Response, next: NextFunction): void => {
+  try {
+    req.session.destroy((err) => {
+      if (err) {
+        return next(err);
+      }
+      res.redirect('/');
+    });
+  } catch (error) {
+    next(error);
+  }
 };

@@ -1,6 +1,6 @@
-# LINE Login Node.js + TypeScript Project
+# LINE Login with Node.js, TypeScript, and Express 5
 
-This project demonstrates how to implement LINE login functionality using Node.js, Express, and TypeScript. It provides a simple authentication flow that allows users to log in with their LINE accounts and view their profile information.
+This project demonstrates how to implement LINE login functionality using Node.js, Express 5, and TypeScript. It provides a simple authentication flow that allows users to log in with their LINE accounts and view their profile information.
 
 ## Table of Contents
 
@@ -15,7 +15,9 @@ This project demonstrates how to implement LINE login functionality using Node.j
 ## Features
 
 - LINE login integration with TypeScript
-- User authentication
+- User authentication and session management
+- Express 5 with improved error handling
+- Enhanced security with Helmet, CORS, and cookie protection
 - Profile page to display user information
 - Simple and clean user interface
 - Type-safe code with TypeScript
