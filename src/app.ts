@@ -6,6 +6,7 @@ import cors from 'cors';
 import helmet from 'helmet';
 import cookieParser from 'cookie-parser';
 import authRoutes from './routes/auth';
+import { globalRateLimiter, securityHeaders, csrfProtection } from './middleware/security';
 
 // Load environment variables
 dotenv.config();
@@ -28,6 +29,9 @@ app.use(cors({
   credentials: true
 }));
 app.use(cookieParser());
+app.use(securityHeaders);
+app.use(csrfProtection);
+app.use(globalRateLimiter);
 
 // Middleware
 app.use(express.json());
@@ -57,7 +61,9 @@ app.get('/', (req, res) => {
 });
 
 // Error handling middleware (Express 5 style)
-app.use((err: any, req: express.Request, res: express.Response, next: express.NextFunction) => {
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
+app.use((err: Error & { status?: number }, req: express.Request, res: express.Response, _next: express.NextFunction) => {
+  // eslint-disable-next-line no-console
   console.error(err.stack);
   res.status(err.status || 500).render('error', {
     message: err.message,
@@ -73,8 +79,14 @@ app.use((req, res) => {
   });
 });
 
-// Start the server
-const PORT = process.env.PORT || 3100;
-app.listen(PORT, () => {
-  console.log(`Server is running on http://localhost:${PORT}`);
-});
+// Start the server if this file is run directly
+if (require.main === module) {
+  const PORT = process.env.PORT || 3100;
+  app.listen(PORT, () => {
+    // eslint-disable-next-line no-console
+    console.log(`Server is running on http://localhost:${PORT}`);
+  });
+}
+
+// Export app for testing
+export default app;

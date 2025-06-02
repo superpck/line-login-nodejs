@@ -1,15 +1,20 @@
 import { Request, Response, NextFunction } from 'express';
 import jwt from 'jsonwebtoken';
-import { promisify } from 'util';
+
+// Define a user interface for better type safety
+interface JwtUser {
+  userId: string;
+  displayName?: string;
+  iat?: number;
+  exp?: number;
+}
 
 // Extend Express Request type to include user property
 declare module 'express-serve-static-core' {
   interface Request {
-    user?: any;
+    user?: JwtUser;
   }
 }
-
-const verifyToken = promisify<string, string, any>(jwt.verify);
 
 export const isAuthenticated = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
   try {
@@ -21,7 +26,19 @@ export const isAuthenticated = async (req: Request, res: Response, next: NextFun
     }
 
     try {
-      const decoded = await verifyToken(token, process.env.JWT_SECRET || '');
+      // Use a promisified version without the utility
+      const decoded = await new Promise<JwtUser>((resolve, reject) => {
+        jwt.verify(
+          token, 
+          process.env.JWT_SECRET || 'fallback-secret-do-not-use-in-production',
+          // eslint-disable-next-line @typescript-eslint/no-explicit-any
+          (err: Error | null, decoded: any) => {
+            if (err) reject(err);
+            else resolve(decoded as JwtUser);
+          }
+        );
+      });
+      
       req.user = decoded;
       next();
     } catch (error) {
@@ -35,9 +52,11 @@ export const isAuthenticated = async (req: Request, res: Response, next: NextFun
 // Simple middleware to check if user is logged in via session
 export const checkSession = (req: Request, res: Response, next: NextFunction): void => {
   try {
-    if (req.session && req.session.user) {
+    if (req.session?.user) {
+      // User is authenticated via session
       next();
     } else {
+      // If no user in session, redirect to login page
       res.redirect('/');
     }
   } catch (error) {
